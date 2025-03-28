@@ -30,7 +30,7 @@ export const auth = betterAuth({
     },
 	emailAndPassword: {
 		enabled: true,
-        requireEmailVerification: true,
+        // requireEmailVerification: true,
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		sendResetPassword: async ({ user, url, token }, request) => {
             await sendEmail({
