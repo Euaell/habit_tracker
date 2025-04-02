@@ -2,7 +2,7 @@ import dbConnect from "@/lib/db/connect";
 import Habit, { HabitDocument } from "@/models/habit";
 import HabitEntry, { HabitEntryDocument } from "@/models/habitEntry";
 import mongoose from "mongoose";
-import { Habit as HabitType, UpdateHabit } from '@/types/habits';
+import { CreateHabit, UpdateHabit } from '@/types/habits';
 import { HabitEntryStatus } from "@/types/habitEntry";
 import { subDays, isSameDay } from 'date-fns';
 import ID from "@/types/id";
@@ -37,10 +37,7 @@ export async function getHabitById(habitId: string, userId: ID): Promise<HabitDo
     return habit ? { ...habit, id: habit._id.toString() } as HabitDocument : null;
 }
 
-// Omit allows creating without requiring internal fields like _id, streak etc.
-export type CreateHabitData = Omit<HabitType, 'id' | 'userId' | 'streak' | 'longestStreak' | 'lastCompletedDate' | 'createdAt' | 'archived'>;
-
-export async function createHabit(data: CreateHabitData, userId: ID): Promise<HabitDocument> {
+export async function createHabit(data: CreateHabit, userId: ID): Promise<HabitDocument> {
     await dbConnect();
      if (!mongoose.Types.ObjectId.isValid(userId as string)) {
         throw new Error("Invalid user ID format");
@@ -56,12 +53,10 @@ export async function updateHabit(habitId: string, userId: ID, data: UpdateHabit
     if (!mongoose.Types.ObjectId.isValid(userId as string) || !mongoose.Types.ObjectId.isValid(habitId)) {
         return null;
     }
-    // Ensure internal fields are not updated directly through this method
-    const { ...updateData } = data;
 
     const updatedHabit = await Habit.findOneAndUpdate(
         { _id: habitId, userId },
-        { $set: updateData },
+        { $set: data },
         { new: true, runValidators: true } // Return the updated doc and run schema validators
     ).lean();
 
@@ -98,7 +93,7 @@ export async function getHabitEntries(habitId: string, userId: ID, startDate: Da
 interface RecordEntryParams {
     habitId: string;
     userId: ID;
-    date: Date; // The date the entry applies to
+    date: Date; // The date the entry applies to (can be backdated)
     status: HabitEntryStatus;
     notes?: string;
 }
@@ -117,7 +112,7 @@ export async function recordHabitEntry({ habitId, userId, date, status, notes }:
     }
 
     try {
-        // Upsert logic: Update if exists for this date, otherwise insert
+        // Update if exists for this date, otherwise insert
         await HabitEntry.updateOne(
             { habitId, userId, date: normalizedDate },
             { $set: { status, notes }, $setOnInsert: { createdAt: new Date() } }, // Update status/notes, set createdAt only on insert
@@ -140,14 +135,14 @@ export async function recordHabitEntry({ habitId, userId, date, status, notes }:
     }
 }
 
-// --- Streak Calculation (Simplified Example: Daily Build Habits) ---
-// NOTE: This is a simplified example for daily 'build' habits.
-// Real-world implementation needs to handle:
-// - 'quit' habits (streak increases when *not* logged or logged as 'avoided')
-// - Recurrence rules (weekly, N days, etc.) - checking if the *previous* expected day was completed.
+// --- Streak Calculation for Daily, Build,
+// TODO: needs to handle:
+// - 'quit' habits (streak increases when not logged or logged as 'avoided')
+// - Recurrence rules (weekly, N days, etc.)
 // - Skipped days ('skipped' status might pause or break the streak based on rules)
-// - Timezones (ensure date comparisons are robust)
-
+// - Timezones, currently using UTC
+// - Lapsed habits (for quit) (should reset streak?)
+// - Missed days (for build) (should reset streak?)
 async function calculateAndUpdateStreak(habit: HabitDocument, entryDate: Date, entryStatus: HabitEntryStatus): Promise<void> {
     // Only calculate for 'build' habits marked 'completed' in this simplified example
     if (habit.type !== 'build' || entryStatus !== 'completed') {
