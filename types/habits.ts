@@ -1,30 +1,6 @@
 import ID from "./id";
 
-/* 
-habits:
-_id: ObjectId (Primary Key)
-userId: ObjectId (Reference to users, Indexed)
-name: String
-description: String (Optional)
-type: String ('build' | 'quit')
-color: String (Optional hex code)
-icon: String (Optional icon identifier)
-timeOfDay: Array of Strings (['morning', 'afternoon', 'evening'])
-recurrence: Object (Stores the rules)
-    type: String ('daily', 'weekly', 'every_n_days', 'times_per_week')
-    daysOfWeek: Array of Numbers (Optional, 0-6 for Sun-Sat, used if type is 'weekly')
-    interval: Number (Optional, e.g., 2 for 'every_n_days')
-    times: Number (Optional, e.g., 3 for 'times_per_week')
-    weekStartsOn: Number (Optional, 0 or 1, relevant for 'times_per_week')
-streak: Number (Current streak count, denormalized for quick display)
-longestStreak: Number (Denormalized)
-lastCompletedDate: Date (Optional, helps in streak calculation)
-createdAt: Date
-archived: Boolean (Default: false)
-*/
-export default interface Habit {
-    id: ID
-    userId: ID
+export interface UpdateHabit {
     name: string
     description?: string
     type: 'build' | 'quit'
@@ -32,12 +8,20 @@ export default interface Habit {
     icon?: string
     timeOfDay: timeOfDay[]
     recurrence: Recurrence
+}
+
+export interface Habit extends UpdateHabit {
+    id: ID
+    userId: ID
+
     streak: number
     longestStreak: number
     lastCompletedDate?: Date
     createdAt: Date
     archived: boolean
 }
+
+export type CreateHabit = Omit<Habit, 'id' | 'userId' | 'streak' | 'longestStreak' | 'lastCompletedDate' | 'createdAt' | 'archived'>;
 
 export type RecurrenceType = 'daily' | 'weekly' | 'every_n_days' | 'times_per_week'
 export type timeOfDay = 'morning' | 'afternoon' | 'evening'

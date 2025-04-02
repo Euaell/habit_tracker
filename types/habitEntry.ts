@@ -10,7 +10,7 @@ notes: String (Optional)
 createdAt: Date (Timestamp when the record was actually created)
 */ 
 
-export default interface HabitEntry {
+export interface HabitEntry {
     id: ID
     habitId: ID
     userId: ID
