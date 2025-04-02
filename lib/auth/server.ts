@@ -14,6 +14,7 @@ const db = client.db();
 export const auth = betterAuth({
 	advanced: {
 		cookiePrefix: "habit_tracker_",
+        useSecureCookies: process.env.NODE_ENV === "production",
 	},
 	database: mongodbAdapter(db),
 	emailVerification: {
