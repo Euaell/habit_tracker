@@ -1,15 +1,5 @@
 import ID from "./id";
 
-/*
-_id: ObjectId (Primary Key)
-habitId: ObjectId (Reference to habits, Indexed)
-userId: ObjectId (Reference to users, Indexed)
-date: Date (Store the date it applies to, ideally normalized to UTC midnight, Indexed)
-status: String ('completed', 'missed', 'skipped' for 'build' / 'avoided', 'lapsed', 'skipped' for 'quit')
-notes: String (Optional)
-createdAt: Date (Timestamp when the record was actually created)
-*/ 
-
 export interface HabitEntry {
     id: ID
     habitId: ID
